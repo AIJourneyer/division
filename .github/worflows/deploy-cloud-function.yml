@@ -33,3 +33,4 @@ jobs:
           entry_point: divide_numbers
           source_dir: .
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+
