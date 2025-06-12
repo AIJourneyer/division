@@ -9,27 +9,28 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: read
-
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Authenticate using Workload Identity Federation
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          token_format: access_token
-          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-      - name: Deploy to Cloud Functions
-        uses: google-github-actions/deploy-cloud-functions@v2
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          name: divide-numbers
-          region: us-central1
-          runtime: python310
-          entry_point: divide_numbers
-          source_dir: .
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy to Cloud Functions (2nd Gen)
+        run: |
+          gcloud functions deploy divide_numbers \
+            --gen2 \
+            --runtime=python310 \
+            --region=us-central1 \
+            --entry-point=divide_numbers \
+            --trigger-http \
+            --allow-unauthenticated \
+            --source=. \
+            --project=${{ secrets.GCP_PROJECT_ID }}
